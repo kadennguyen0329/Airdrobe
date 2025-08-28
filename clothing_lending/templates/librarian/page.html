@@ -1,0 +1,696 @@
+{% load socialaccount %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Librarian Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa;
+            flex-grow: 1;
+            color: #111;
+        }
+        
+        header {
+            background: #111;
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-content h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+            margin: 0;
+            font-size: 1.75rem;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #111;
+            color: white;
+            border-color: #111;
+        }
+        
+        .btn-secondary {
+            /* color: #666; */
+            background: none;
+            color: darkgrey;
+            border: 1px solid darkgrey;
+            padding: 0.5rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            /* background: #333; */
+            background: white;
+            color: #111;
+        }
+        
+        .btn-secondary:hover {
+            /* border-color: #111;
+            color: #111; */
+            background: white;
+            color: #111;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            color: #218838;
+            background: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            color: #dc3545;
+            background: white;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            margin: 3rem auto;
+            padding: 0 2rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .card {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: -0.02em;
+            color: #111;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .section-heading {
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            color: #111;
+        }
+        
+        .list-group {
+            border: 1px solid #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .list-group-item {
+            padding: 1.25rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.5em 0.75em;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .badge-primary {
+            background: #111;
+            color: white;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        a.title-link {
+            color: #111;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+        
+        a.title-link:hover {
+            color: #666;
+        }
+        
+        .meta-text {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .alert {
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .alert-secondary {
+            background: #f1f1f1;
+            color: #666;
+        }
+        
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table th {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 2px solid #eee;
+            color: #666;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+        
+        .table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .lending-action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+        
+        .form-group {
+            flex: 1;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .user-info {
+            color: #666;
+            /* margin-right: 2rem; */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1><a href="{% url 'browse' %}" style="color: white; text-decoration: none;">AIRDROBE DASHBOARD</a></h1>
+            <div class="nav-actions">
+                {% if user.is_authenticated %}
+                    <span class="user-info">
+                        {{ patron.custom_username|default:user.username }}
+                    </span>
+                    <a href="{% url 'browse' %}" class="btn btn-secondary">Browse Items</a>
+                    <a href="{% url 'logout' %}" class="btn btn-secondary">Exit</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        {% if user.is_authenticated %}
+            <h2 class="section-heading">Librarian Dashboard</h2>
+            
+            {% if messages %}
+                <div class="alert alert-info">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Your Collections</h4>
+                    </div>
+                    <div class="card-body">
+                        <a href="{% url 'add_collection' %}" class="btn btn-primary" style="margin-bottom: 1.5rem; display: inline-block;">Add New Collection</a>
+                        
+                        {% if collections %}
+                            <div class="list-group">
+                                {% for collection in collections %}
+                                    <div class="list-group-item">
+                                        <div>
+                                            <a href="{% url 'collection_detail' collection.id %}" class="title-link">{{ collection.name }}</a>
+                                            <p class="meta-text">{{ collection.description|truncatechars:60 }}</p>
+                                        </div>
+                                        <span class="badge badge-primary">{{ collection.items.count }} items</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary">
+                                You haven't created any collections yet.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Your Items</h4>
+                    </div>
+                    <div class="card-body">
+                        <a href="{% url 'add_item' %}" class="btn btn-primary" style="margin-bottom: 1.5rem; display: inline-block;">Add New Item</a>
+                        
+                        {% if recent_items %}
+                            <div class="list-group">
+                                {% for item in recent_items %}
+                                    <div class="list-group-item">
+                                        <div>
+                                            <a href="{% url 'item_detail' item.id %}" class="title-link">{{ item.name }}</a>
+                                            <p class="meta-text">
+                                                {% with item.categories.all|slice:":2" as display_categories %}
+                                                    {{ display_categories|join:", " }}
+                                                    {% if item.categories.count > 2 %}
+                                                        +{{ item.categories.count|add:"-2" }} more
+                                                    {% endif %}
+                                                {% endwith %}
+                                                • {{ item.get_size_display }}
+                                            </p>
+                                        </div>
+                                        <span class="badge {% if item.available %}badge-success{% else %}badge-danger{% endif %}">
+                                            {% if item.available %}Available{% else %}Not Available{% endif %}
+                                        </span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-secondary">
+                                You haven't added any items yet.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="section-heading">Lending Management</h2>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h4>Pending Borrow Requests</h4>
+                </div>
+                <div class="card-body">
+                    {% if pending_requests %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Borrower</th>
+                                        <th>Request Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in pending_requests %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'item_detail' request.item.id %}" class="title-link">{{ request.item.name }}</a>
+                                        </td>
+                                        <td>
+                                            {% with request.item.categories.all|slice:":2" as display_categories %}
+                                                {{ display_categories|join:", " }}
+                                                {% if request.item.categories.count > 2 %}
+                                                    +{{ request.item.categories.count|add:"-2" }} more
+                                                {% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>{{ request.borrower.user.username }}</td>
+                                        <td>{{ request.request_date|date:"M d, Y" }}</td>
+                                        <td class="lending-action-buttons">
+                                            <form method="POST" action="{% url 'manage_lending_request' request.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                            </form>
+                                            <form method="POST" action="{% url 'manage_lending_request' request.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            No pending requests for your items.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4>Pending Collection Invites</h4>
+                </div>
+                <div class="card-body">
+                    {% if pending_invites %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Collection</th>
+                                        <th>Borrower</th>
+                                        <th>Request Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for invite in pending_invites %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'collection_detail' invite.collection.id %}" class="title-link">{{ invite.collection.name }}</a>
+                                        </td>
+                                        <td>{{ invite.requester.user.username }}</td>
+                                        <td>{{ invite.request_date|date:"M d, Y" }}</td>
+                                        <td class="lending-action-buttons">
+                                            <form method="POST" action="{% url 'manage_invite' invite.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="approve">
+                                                <button type="submit" class="btn btn-success btn-sm">Approve</button>
+                                            </form>
+                                            <form method="POST" action="{% url 'manage_invite' invite.id %}" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject">
+                                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            No pending invites for your collections.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4>Currently Borrowed Items</h4>
+                </div>
+                <div class="card-body">
+                    {% if active_lendings %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Borrower</th>
+                                        <th>Borrowed Since</th>
+                                        <th>Due By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lending in active_lendings %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'item_detail' lending.item.id %}" class="title-link">{{ lending.item.name }}</a>
+                                        </td>
+                                        <td>
+                                            {% for category in lending.item.categories.all %}
+                                                {{ category.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>{{ lending.borrower.user.username }}</td>
+                                        <td>{{ lending.approved_date|date:"M d, Y" }}</td>
+                                        <td>{{ lending.due_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            No active lendings for your items.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h4>Requested Returns</h4>
+                </div>
+                <div class="card-body">
+                    {% if returns_requested %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Category</th>
+                                        <th>Borrower</th>
+                                        <th>Borrowed Since</th>
+                                        <th>Due By</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for lending in returns_requested %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'item_detail' lending.item.id %}" class="title-link">{{ lending.item.name }}</a>
+                                        </td>
+                                        <td>
+                                            {% for category in lending.item.categories.all %}
+                                                {{ category.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </td>
+                                        <td>{{ lending.borrower.user.username }}</td>
+                                        <td>{{ lending.approved_date|date:"M d, Y" }}</td>
+                                        <td>{{ lending.due_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <form method="POST" action="{% url 'manage_lending_request' lending.id %}">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="return">
+                                                <button type="submit" class="btn btn-primary btn-sm">Mark Returned</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary">
+                            No items requested to be returned.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4>Promote User to Librarian</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'promote_user' %}" class="form-row">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="email" class="form-label">User Email</label>
+                            {{ form.email.as_widget|safe }}
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Promote User</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <p>You need to be logged in as a librarian to access this page.</p>
+                <a href="{% url 'account_login' %}" class="btn btn-primary">Login</a>
+            </div>
+        {% endif %}
+    </div>
+</body>
+
+<footer>
+    <div class="footer-content">
+        <h5>Class project for UVA CS 3240 | This system is not monitored, and no real information should be submitted</h5>
+    </div>
+    <style>
+        footer {
+            margin-top: auto;
+            background: #111;
+            padding: 0.75rem 0;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+        }
+        .footer-content {
+            max-width: 100%;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-content h5 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: darkgrey;
+            margin: 0;
+            font-size: 0.75rem;
+            line-height: 0.5;
+            font-weight: 300;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</footer>
+
+<script>
+    // Add confirmation for delete actions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add confirmation to any delete forms in the librarian dashboard
+        const deleteForms = document.querySelectorAll('form[action*="delete"]');
+        deleteForms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                const confirmed = confirm('Are you sure you want to delete this item? This action cannot be undone.');
+                if (!confirmed) {
+                    event.preventDefault();
+                }
+            });
+        });
+    });
+</script>
+
+</html>

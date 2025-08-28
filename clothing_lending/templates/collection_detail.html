@@ -1,0 +1,892 @@
+{% load socialaccount %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ collection.name }} - Detail</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa;
+            flex-grow: 1;
+            color: #111;
+        }
+        
+        header {
+            background: #111;
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-content h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+            margin: 0;
+            font-size: 1.75rem;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+        
+        .main-container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 3rem auto;
+            padding: 0 2rem;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            border-radius: 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #111;
+            color: white;
+            border-color: #111;
+        }
+        
+        .btn-secondary {
+            /* color: #666; */
+            background: none;
+            color: darkgrey;
+            border: 1px solid darkgrey;
+            padding: 0.5rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            /* background: #333; */
+            background: white;
+            color: #111;
+        }
+        
+        .btn-secondary:hover {
+            /* border-color: #111;
+            color: #111; */
+            background: white;
+            color: #111;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+            border-color: #ffc107;
+        }
+
+        .btn-warning:hover {
+            background: white;
+            color: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            /* background: #c82333; */
+            color: #dc3545;
+            background: white;
+        }
+
+        .alert {
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .card {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 3rem;
+            padding: 2rem;
+        }
+        
+        .collection-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+            font-weight: 700;
+        }
+
+        .collection-creator {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 2rem;
+        }
+        
+        .collection-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #444;
+            margin-bottom: 2rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-heading {
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            color: #111;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+        
+        .breadcrumb-item {
+            font-size: 0.9rem;
+        }
+        
+        .breadcrumb-item a {
+            color: #666;
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item a:hover {
+            color: #111;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "/";
+            padding: 0 0.5rem;
+            color: #ccc;
+        }
+        
+        .breadcrumb-item.active {
+            color: #111;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            padding: 2rem 2rem;
+            box-sizing: border-box;
+            min-height: 300px;
+        }
+
+        .items-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .item-card {
+            background: white;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .item-image {
+            height: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+        
+        .placeholder-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f1f1;
+            color: #999;
+        }
+        
+        .item-details {
+            padding: 1.5rem;
+        }
+        
+        .item-meta h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .item-meta span {
+            display: inline-block;
+            margin-right: 1rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .item-category, .item-size {
+            display: inline-block;
+            margin-right: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .item-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            /*display: block;*/
+            /*margin-top: 0.5rem;*/
+            /*font-size: 0.85rem;*/
+            /*font-weight: 500;*/
+        }
+        
+        .item-status.available {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .item-status.unavailable {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .borrow-btn {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .item-card:hover .borrow-btn {
+            opacity: 1;
+        }
+        
+        .item-card:hover .item-image img {
+            transform: scale(1.05);
+        }
+        
+        .image-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #999;
+        }
+        
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .collection-search-bar {
+            display: flex;
+            width: 100%;
+            max-width: 600px;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 0;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            height: 42px;
+            box-sizing: border-box;
+        }
+
+        .card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .no-items {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 3rem;
+            text-align: center;
+            color: #666;
+            border-radius: 4px;
+        }
+
+        .form-section {
+            margin-top: 3rem;
+            border-top: 1px solid #eee;
+            padding-top: 2rem;
+        }
+
+        .form-section h5 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            letter-spacing: -0.02em;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-control {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .error-box {
+            background-color: #ffe6e6;
+            color: #a94442;
+            border: 1px solid #f5c2c7;
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+        }
+
+        .field-error p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #d9534f;
+        }
+
+        .user-name {
+            color: white;
+            font-size: 0.9rem;
+            margin-right: 1rem;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 0;
+        }
+
+        .user-info {
+            color: #666;
+            /* margin-right: 2rem; */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1><a href="{% url 'browse' %}" style="color: white; text-decoration: none;">AIRDROBE</a></h1>
+            <div class="nav-actions">
+                {% if user.is_authenticated %}
+                    <!-- <span class="user-name">
+                        {% if patron.custom_username %}
+                            {{ patron.custom_username }}
+                        {% else %}
+                            {{ user.username }}
+                        {% endif %}
+                    </span> -->
+                    <span class="user-info">
+                        {{ patron.custom_username|default:user.username }}
+                    </span>
+            
+                    {% if user.user_type == 1 %}
+                        <a href="{% url 'librarian_page' %}" class="btn btn-secondary">Dashboard</a>
+                    {% else %}
+                        {% if patron.profile_picture %}
+                            <img src="{{ patron.profile_picture }}" alt="Profile Picture" class="profile-img">
+                        {% else %}
+                            <img src="{% static 'patron/default_pfp.png' %}" alt="Default Profile Picture" class="profile-img">
+                        {% endif %}
+                        <a href="{% url 'patron_page' %}" class="btn btn-secondary">Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'browse' %}" class="btn btn-secondary">Browse Items</a>
+                    <a href="{% url 'logout' %}" class="btn btn-secondary">Exit</a>
+                {% else %}
+                    <a href="{% provider_login_url 'google' %}" class="btn btn-secondary">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="main-container">
+        {% if canview %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'browse' %}">Browse</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ collection.name }}</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <h2 class="collection-title">{{ collection.name }}</h2>
+            <h3 class="collection-creator">Created by: {{collection.created_by}}</h3>
+            <p class="collection-description"><b>Description:</b><br>{{ collection.description }}</p>
+            {% if collection.is_private %}
+                <div class="allowed-patrons-section">
+                    <h4>Users With Access</h4>
+                    <div class="access-lists">
+                        <div class="librarians-list">
+                            <h5>Librarians</h5>
+                            {% if librarians %}
+                                <ul class="users-list">
+                                    {% for librarian in librarians %}
+                                        <li>{{ librarian.user.username }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No librarians in the system.</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="patrons-list">
+                            <h5>Allowed Patrons</h5>
+                            {% if collection.allowed_patrons.all %}
+                                <ul class="users-list">
+                                    {% for patron in collection.allowed_patrons.all %}
+                                        <li>
+                                            {{ patron.user.username }}{% if patron.custom_username %} ({{ patron.custom_username }}){% endif %}
+                                            {% if user.is_authenticated and user.user_type == 1 %}
+                                                <form method="POST" action="{% url 'remove_patron_access' collection.id patron.id %}" class="d-inline" style="float: right;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove access for this patron?');">
+                                                        <i class="fas fa-times"></i> Remove
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>No patrons have been granted access yet.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            <div class="action-buttons">
+                {% if user.is_authenticated and user.user_type == 1 %}
+                <a href="{% url 'browse' %}" class="btn btn-primary">Back to Browse</a>
+                <a href="{% url 'librarian_page' %}" class="btn btn-primary">Back to Dashboard</a>
+                {% else %}
+                <a href="{% url 'browse' %}" class="btn btn-primary">Back to Browse</a>
+                {% endif %}
+                {% if canedit %}
+                <a href="{% url 'edit_collection' collection.id %}" class="btn btn-warning">Edit Collection</a>
+                {% endif %}
+                {% if user.is_authenticated and user.user_type == 1 %}
+                <form method="POST" action="{% url 'delete_collection' collection.id %}" onsubmit="return confirm('Are you sure you want to delete this collection? This action cannot be undone.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete Collection</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+
+        <div class="items-area">
+            <h2 class="section-heading" style="text-align: center;">Items in {{ collection.name }}</h2>
+            <div class="card-body">
+                <form class="collection-search-bar" onsubmit="return false;">
+                    <input type="text" id="searchInput" name="q" placeholder="Search items in collection..." value="{{ request.GET.q }}" class="form-control search-input">
+                </form>
+            </div>
+        <div class="items-grid">
+            {% for item in items %}
+            <div class="item-card" data-item-id="{{ item.id }}">
+                <div class="item-image">
+                    {% if item.s3_image_key %}
+                    <div class="image-container">
+                        <img class="item-img" data-item-id="{{ item.id }}" src="" alt="{{ item.name }}" style="display:none;">
+                        <div class="image-loading">
+                            <div style="width: 40px; height: 40px; border: 3px solid #eee; border-top: 3px solid #111; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="placeholder-image">No image</div>
+                    {% endif %}
+
+                    {% if item.available %}
+                    <a href="{% url 'item_detail' item.id %}" class="borrow-btn">View Details</a>
+                    {% endif %}
+                    
+                    {% if user.is_authenticated %}
+                        {% if user.user_type == 1 or collection.created_by == user %}
+                        <form method="POST" action="{% url 'remove_item_from_collection' collection.id item.id %}" style="position: absolute; top: 10px; right: 10px;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Remove this item from the collection?');">
+                                <i class="fas fa-times"></i> Remove
+                            </button>
+                        </form>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                <div class="item-details">
+                    <div class="item-meta">
+                        <h3 class="item-title">{{ item.name }}</h3>
+                        <span class="item-category">
+                            {% with item.categories.all|slice:":2" as display_categories %}
+                                {{ display_categories|join:", " }}
+                                {% if item.categories.count > 2 %}
+                                    +{{ item.categories.count|add:"-2" }} more
+                                {% endif %}
+                            {% endwith %}
+                        </span>
+                        <span class="item-size">{{ item.get_size_display }}</span>
+                        <span class="item-status {% if item.available %}available{% else %}unavailable{% endif %}">
+                            {{ item.available|yesno:"Available,Unavailable" }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 0;">
+                <p style="color: #666; font-size: 1.1rem;">No items in this collection yet.</p>
+            </div>
+            {% endfor %}
+            {% if canadd %}
+            <div class="item-card" style="text-align: center;">
+                <div class="card-body" style="padding-top: 1rem;">
+                    <div class="form-section" style="margin-top: 0; padding-top: 0; border-top: none;">
+                        <h5 style="margin-bottom: 1rem;">Add Item</h5>
+
+                        {% if form.non_field_errors %}
+                            <div class="error-box">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <form method="POST">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                {{ form.items }}
+                                {% if form.items.errors %}
+                                <div class="field-error">
+                                    {% for error in form.items.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" name="add_to_collection" class="btn btn-primary">Add to Collection</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info" style="text-align: center;">
+            <p>You need to be invited to this collection to view.</p>
+            {% if user.is_authenticated and user.user_type == 2 %}
+            <form method="POST" action="/lending/collections/{{ collection.id }}/request-invite/">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Request Access</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .allowed-patrons-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .access-lists {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+
+        .librarians-list, .patrons-list {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .users-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .users-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-danger.btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            border-radius: 0.2rem;
+        }
+
+        .btn-danger.btn-sm:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        .users-list li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .items-area {
+                width: 100%;
+            }
+            
+            .access-lists {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+
+    <script>
+        function createNoItemsMessage() {
+            const noItems = document.createElement('div');
+            noItems.className = 'no-items';
+            noItems.innerHTML = '<p>No items match the search.</p>';
+
+            const itemsGrid = document.querySelector('.items-grid');
+            itemsGrid.appendChild(noItems);
+            return noItems;
+        }
+        function applyCollectionFilters() {
+            const searchInput = document.getElementById('searchInput');
+            const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            const itemCards = document.querySelectorAll('.item-card');
+            let hasVisibleItems = false;
+
+            itemCards.forEach(card => {
+                const name = card.querySelector('.item-title')?.textContent.toLowerCase() || '';
+                const categoryText = card.querySelector('.item-category')?.textContent.toLowerCase() || '';
+                const sizeText = card.querySelector('.item-size')?.textContent.replace('Size: ', '').trim().toLowerCase();
+
+                const matchesSearch =
+                    searchQuery === '' ||
+                    name.includes(searchQuery) ||
+                    categoryText.includes(searchQuery) ||
+                    sizeText.includes(searchQuery);
+
+                if (matchesSearch) {
+                    card.style.display = 'block';
+                    hasVisibleItems = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const noItemsMessage = document.querySelector('.no-items') || createNoItemsMessage();
+            if (noItemsMessage) {
+                if (!hasVisibleItems) {
+                    noItemsMessage.style.display = 'block';
+                } else {
+                    noItemsMessage.style.display = 'none';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+
+            if (searchInput) {
+                // As you type, immediately filter
+                searchInput.addEventListener('input', () => {
+                    applyCollectionFilters();
+                });
+            }
+
+            if (searchButton) {
+                // If user clicks the search button manually
+                searchButton.addEventListener('click', () => {
+                    applyCollectionFilters();
+                });
+            }
+
+
+            // Get all items with s3_image_key
+            const itemImages = document.querySelectorAll('.item-img[data-item-id]');
+
+            // For each item, fetch a fresh presigned URL
+            itemImages.forEach(img => {
+                const itemId = img.getAttribute('data-item-id');
+                const loadingElement = img.parentElement.querySelector('.image-loading');
+
+                fetch(`/lending/items/${itemId}/presigned-url/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Set the image source to the fresh presigned URL
+                            img.src = data.url;
+                            img.onload = function() {
+                                // Hide loading indicator when image loads
+                                if (loadingElement) {
+                                    loadingElement.style.display = 'none';
+                                }
+                                img.style.display = 'block';
+                            };
+                        } else {
+                            console.error('Failed to get presigned URL:', data.error);
+                            if (loadingElement) {
+                                loadingElement.textContent = 'Failed to load image';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching presigned URL:', error);
+                        if (loadingElement) {
+                            loadingElement.textContent = 'Failed to load image';
+                        }
+                    });
+            });
+        });
+    </script>
+</body>
+
+<footer>
+    <div class="footer-content">
+        <h5>Class project for UVA CS 3240 | This system is not monitored, and no real information should be submitted</h5>
+    </div>
+    <style>
+        footer {
+            margin-top: auto;
+            background: #111;
+            padding: 0.75rem 0;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+        }
+        .footer-content {
+            max-width: 100%;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-content h5 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: darkgrey;
+            margin: 0;
+            font-size: 0.75rem;
+            line-height: 0.5;
+            font-weight: 300;
+            text-align: center;
+            letter-spacing: 0.02em;
+        }
+    </style>
+</footer>
+
+</html>

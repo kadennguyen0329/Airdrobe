@@ -1,0 +1,983 @@
+{% load socialaccount %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Library</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        .alert {
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 class="scramble-text"><a href="{% url 'browse' %}" style="color: white; text-decoration: none;">AIRDROBE</a><br></h1>
+            <!-- <nav> -->
+            <div class="nav-actions">
+                {% if user.is_authenticated %}
+                    {% if user.user_type == 2 %}
+                        {% with patron=user.patron %}
+                            <span class="user-info">
+                                {{ patron.custom_username|default:user.username }}
+                            </span>
+
+                            {% if patron.profile_picture %}
+                                <img src="{{ patron.profile_picture }}" alt="Profile Picture" class="profile-img">
+                            {% else %}
+                                <img src="{% static 'patron/default_pfp.png' %}" alt="Default Profile Picture" class="profile-img">
+                            {% endif %}
+                            
+                            <a href="{% url 'patron_page' %}" class="btn btn-primary">Dashboard</a>
+                            <a href="{% url 'logout' %}" class="logout-btn">Exit</a>
+                        {% endwith %}
+                    {% elif user.user_type == 1 %}
+                        <span class="user-info">{{ user.username }}</span>
+                        <a href="{% url 'librarian_page' %}" class="btn btn-primary">Dashboard</a>
+                        <a href="{% url 'logout' %}" class="logout-btn">Exit</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% provider_login_url 'google' %}" class="login-btn">Sign In</a>
+                {% endif %}
+            <!-- </nav> -->
+            <div class="nav-actions">
+        </div>
+    </header>
+
+    {% if messages %}
+    <div class="alert alert-info">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <main class="main-content">
+    <div class="browse-container">
+        <div class="filters-sidebar">
+            <div class="filter-header">
+                <h3>Filter Library</h3>
+            </div>
+            
+            <div class="filter-section">
+                <h4>Search</h4>
+                <form class="search-form" onsubmit="return false;">
+                    <label>
+                        <input type="text" id="searchInput" name="q" placeholder="Search items..." value="{{ request.GET.q }}" class="form-control search-input">
+                    </label>
+                    <button type="submit" class="search-button" id="searchButton">Search</button>
+                </form>
+                <div class="filter-section">
+                    <h4>Type</h4>
+                    <div class="filter-options">
+                        <button class="filter-chip active" data-type="items">Items</button>
+                        <button class="filter-chip" data-type="collections">Collections</button>
+                    </div>
+                </div>
+                <div id="item-filters">
+                    <h4>Categories</h4>
+                    <div class="filter-options">
+                        {% for category in categories %}
+                        <button class="filter-chip" data-category="{{ category.name }}">{{ category.name }}</button>
+                        {% endfor %}
+                    </div>
+                    
+                    <h4>Size</h4>
+                    <div class="filter-options size-grid">
+                        <button class="filter-chip" data-size="XS">XS</button>
+                        <button class="filter-chip" data-size="S">S</button>
+                        <button class="filter-chip" data-size="M">M</button>
+                        <button class="filter-chip" data-size="L">L</button>
+                        <button class="filter-chip" data-size="XL">XL</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="clear-filters-wrapper">
+                <button id="clear-filters" class="clear-filters-btn">Clear All Filters</button>
+            </div>
+        </div>
+
+        <div class="items-area">
+            <div class="grid-header">
+                <h2>Library</h2>
+            </div>
+            
+            <div class="items-grid">
+                {% if items %}
+                    {% for item in items %}
+                    <div class="item-card" data-item-id="{{ item.id }}" data-type="item">
+                        <div class="item-image">
+                            {% if item.s3_image_key %}
+                            <div class="image-container">
+                                <img class="item-img" data-item-id="{{ item.id }}" src="" alt="{{ item.name }}">
+                                <div class="image-loading">Loading...</div>
+                            </div>
+                            {% else %}
+                            <div class="placeholder-image">No image</div>
+                            {% endif %}
+                            
+                            {% if item.available %}
+                            <a href="{% url 'item_detail' item.id %}" class="borrow-btn">View Details</a>
+                            {% endif %}
+                        </div>
+                        <div class="item-details">
+                            <div class="item-meta">
+                                <h3 class="item-title">{{ item.name }}</h3>
+                                <span class="item-category">
+                                    {% with item.categories.all|slice:":2" as display_categories %}
+                                        {{ display_categories|join:", " }}
+                                        {% if item.categories.count > 2 %}
+                                            +{{ item.categories.count|add:"-2" }} more
+                                        {% endif %}
+                                    {% endwith %}
+                                </span>
+                                <span class="all-categories" style="display:none;">
+                                    {% for category in item.categories.all %}
+                                        {{ category.name }},
+                                    {% endfor %}
+                                </span>
+                                <span class="item-size">{{ item.get_size_display }}</span>
+                                <span class="item-status {% if item.available %}available{% else %}unavailable{% endif %}">
+                                    {{ item.available|yesno:"Available,Unavailable" }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if collections %}
+                    {% for collection in collections %}
+                    {% if collection.is_private == False %}
+                    <div class="card collection-card" data-collection-id="{{ collection.id }}" data-type="collection">
+                        <div class="collection-details">
+                            <h3 class="collection-title"><a href="{% url 'collection_detail' collection.id %}">{{ collection.name }}</a></h3>
+                            <p class="card-text">{{ collection.description }}</p>
+                            <span class="collection-meta">Created by: {{ collection.created_by.email}}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                        <div class="card collection-card" data-collection-id="{{ collection.id }}" data-type="collection">
+                            <div class="collection-details">
+                                <h3><a href="{% url 'collection_detail' collection.id %}">{{ collection.name }} - Private</a></h3>
+                                <p class="card-text">{{ collection.description }}</p>
+                                <span class="collection-meta">Created by: {{ collection.created_by.email}}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {% endfor %}
+                    {% if restrictedcollections %}
+                        {% for rescollection in restrictedcollections %}
+                        <div class="card collection-card private-collection-card" data-collection-id="{{ rescollection.id }}" data-type="collection">
+                            <div class="collection-details">
+                                <h3>{{ rescollection.name }} - Private</h3>
+                                <p class="card-text">{{ rescollection.description }}</p>
+                                <span class="collection-meta">Created by: {{ rescollection.created_by.email}}</span>
+                                <br>
+                                <br>
+                                {% if user.is_authenticated and user.user_type == 2 %}
+                                <form method="POST" action="/lending/collections/{{ rescollection.id }}/request-invite/">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-primary">Request Access</button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endif %}
+                
+                {% if not items and not collections %}
+                    <div class="no-items">
+                        <p>No items or collections available at the moment.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    </main>
+
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fa;
+            flex-grow: 1;
+        }
+
+        header {
+            background: #111;
+            padding: 2rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        main.main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        header h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            color: white;
+            margin: 0;
+            font-size: 1.75rem;
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .items-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .search-form {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-input {
+            max-width: 300px;
+            width: 100%;
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px 0 0 4px;
+            border-right: none;
+            font-size: 0.9rem;
+            line-height: 1;
+            height: 42px;
+            box-sizing: border-box;
+        }
+
+        .search-button {
+            display: inline-flex;
+            justify-content: center;
+            padding: 0.75rem 1.5rem;
+            border: 1px solid #111;
+            border-left: none;
+            background-color: #111;
+            color: white;
+            font-size: 0.9rem;
+            line-height: 1;
+            height: 42px;
+            box-sizing: border-box;
+            cursor: pointer;
+            border-radius: 0 4px 4px 0;
+            max-width: 85px;
+            text-align: center;
+            width: fit-content;
+        }
+
+        .search-button:hover {
+            background-color: #333;
+        }
+
+        .user-info {
+            color: #666;
+            /* margin-right: 2rem; */
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .profile-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 0;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            background: none;
+            color: darkgrey;
+            border: 1px solid darkgrey;
+            padding: 0.5rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn, .login-btn {
+            background: none;
+            color: darkgrey;
+            border: 1px solid darkgrey;
+            padding: 0.5rem 1.5rem;
+            text-decoration: none;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover, .login-btn:hover, .btn:hover {
+            background: white;
+            color: #111;
+        }
+
+        .browse-container {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            overflow-x: hidden;
+            gap: 1rem;
+            margin: 2rem auto;
+        }
+
+        .filters-sidebar {
+            width: 280px;
+            flex-shrink: 1;
+            background: white;
+            padding: 2rem;
+            box-sizing: border-box;
+            height: fit-content;
+            border-radius: 4px;
+        }
+
+        .filter-header {
+            margin-bottom: 2rem;
+        }
+
+        .filter-header h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: -0.02em;
+            color: #111;
+        }
+        
+        .clear-filters-wrapper {
+            margin-top: 2.5rem;
+            text-align: center;
+        }
+        
+        .clear-filters-btn {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.9rem;
+            color: #666;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        
+        .clear-filters-btn:hover {
+            border-color: #111;
+            color: #111;
+            background: rgba(0,0,0,0.03);
+        }
+
+        .filter-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .filter-section h4 {
+            color: #111;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .filter-chip {
+            background: none;
+            border: 1px solid #ddd;
+            padding: 0.5rem 1rem;
+            border-radius: 100px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .filter-chip:hover {
+            border-color: #111;
+            color: #111;
+        }
+
+        .filter-chip.active {
+            background: #111;
+            color: white;
+            border-color: #111;
+        }
+
+        .size-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .size-grid .filter-chip {
+            min-width: 3rem;
+            text-align: center;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .grid-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 2rem;
+            padding-right: 3rem;
+        }
+
+        .grid-header h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            padding: 2rem 2rem;
+            box-sizing: border-box;
+            min-height: 300px;
+        }
+
+        .item-card {
+            background: white;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .collection-card {
+            background: white;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .private-collection-card {
+            background: lightgray;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .collection-details {
+            padding: 1.0rem;
+        }
+
+        .item-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .collection-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .item-image {
+            height: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .item-card:hover .item-image img {
+            transform: scale(1.05);
+        }
+
+        .placeholder-image {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f1f1;
+            color: #999;
+        }
+
+        .borrow-btn {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .item-card:hover .borrow-btn {
+            opacity: 1;
+        }
+
+        .item-details {
+            padding: 1.5rem;
+        }
+
+        .item-meta h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .collection-meta {
+            font-size: 0.8rem;
+            color: grey;
+        }
+
+        .item-category, .item-size {
+            display: inline-block;
+            margin-right: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .item-status {
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .item-status.available {
+            color: #2ecc71;
+        }
+
+        .item-status.unavailable {
+            color: #e74c3c;
+        }
+
+        .no-items {
+            grid-column: 1 / -1;
+            background: white;
+            padding: 3rem;
+            text-align: center;
+            color: #666;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .browse-container {
+                flex-direction: column;
+                padding-right: 2rem;
+                box-sizing: border-box;
+            }
+
+            .filters-sidebar {
+                width: 100%;
+                padding: 1rem 2rem;
+                box-sizing: border-box;
+            }
+
+            .items-area {
+                width: 100%;
+            }
+
+            .items-grid {
+                padding: 2rem 0;
+            }
+
+            .grid-header {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+        
+        /* Add the scramble text styling */
+        .scramble {
+            color: #4299e1;
+            font-weight: bold;
+        }
+    </style>
+    
+    <script>
+        class TextScramble {
+            constructor(el) {
+                this.el = el;
+                this.chars = '!<>-_\\/[]{}—=+*^?#________';
+                this.originalText = this.el.innerText;
+                this.update = this.update.bind(this);
+            }
+            
+            setText(newText) {
+                const oldText = this.el.innerText;
+                const length = Math.max(oldText.length, newText.length);
+                const promise = new Promise((resolve) => this.resolve = resolve);
+                this.queue = [];
+                for (let i = 0; i < length; i++) {
+                    const from = oldText[i] || '';
+                    const to = newText[i] || '';
+                    const start = Math.floor(Math.random() * 20);
+                    const end = start + Math.floor(Math.random() * 20);
+                    this.queue.push({ from, to, start, end });
+                }
+                cancelAnimationFrame(this.frameRequest);
+                this.frame = 0;
+                this.update();
+                return promise;
+            }
+            
+            update() {
+                let output = '';
+                let complete = 0;
+                for (let i = 0, n = this.queue.length; i < n; i++) {
+                    let { from, to, start, end, char } = this.queue[i];
+                    if (this.frame >= end) {
+                        complete++;
+                        output += to;
+                    } else if (this.frame >= start) {
+                        if (!char || Math.random() < 0.28) {
+                            char = this.randomChar();
+                            this.queue[i].char = char;
+                        }
+                        output += `<span class="scramble">${char}</span>`;
+                    } else {
+                        output += from;
+                    }
+                }
+                this.el.innerHTML = output;
+                if (complete === this.queue.length) {
+                    this.resolve();
+                } else {
+                    this.frameRequest = requestAnimationFrame(this.update);
+                    this.frame++;
+                }
+            }
+            
+            randomChar() {
+                return this.chars[Math.floor(Math.random() * this.chars.length)];
+            }
+        }
+
+        // Initialize the scramble effect
+        const scrambleText = document.querySelector('.scramble-text');
+        if (scrambleText) {
+            const textScramble = new TextScramble(scrambleText);
+            
+            scrambleText.addEventListener('mouseenter', () => {
+                textScramble.setText(scrambleText.getAttribute('data-text') || textScramble.originalText);
+            });
+            
+            scrambleText.addEventListener('mouseleave', () => {
+                textScramble.setText(textScramble.originalText);
+            });
+        }
+
+        // Filter chip toggling
+        document.querySelectorAll('.filter-chip[data-type]').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.filter-chip[data-type]').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                applyFilters();
+            });
+        });
+
+        document.querySelectorAll('.filter-chip[data-category], .filter-chip[data-size]').forEach(chip => {
+            chip.addEventListener('click', () => {
+                chip.classList.toggle('active');
+                applyFilters();
+            });
+        });
+        
+        // Filter functionality
+        function applyFilters() {
+            // Get selected types, categories, and sizes
+            const selectedTypes = Array.from(document.querySelectorAll('.filter-chip[data-type].active'))
+                .map(chip => chip.getAttribute('data-type'));
+            const selectedCategories = Array.from(document.querySelectorAll('.filter-chip[data-category].active'))
+                .map(chip => chip.getAttribute('data-category').toLowerCase());
+            const selectedSizes = Array.from(document.querySelectorAll('.filter-chip[data-size].active'))
+                .map(chip => chip.getAttribute('data-size'));
+
+            const searchInput = document.getElementById('searchInput');
+            const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+            // Show or hide item filters based on selected type
+            const itemFilters = document.getElementById('item-filters');
+            if (selectedTypes.includes('items')) {
+                itemFilters.style.display = 'block';
+            } else {
+                itemFilters.style.display = 'none';
+            }
+            
+            // Get all item and collection cards
+            const itemCards = document.querySelectorAll('.item-card');
+            const collectionCards = document.querySelectorAll('.collection-card');
+
+            let hasVisibleItems = false;
+            
+            // Filter items
+            itemCards.forEach(card => {
+                // const category = card.querySelector('.item-category').textContent.toLowerCase();
+                const name = card.querySelector('.item-title')?.textContent.toLowerCase() || '';
+                const categoryText = card.querySelector('.all-categories')?.textContent.toLowerCase() || '';
+                const categories = categoryText.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                const sizeText = card.querySelector('.item-size').textContent.replace('Size: ', '').trim();
+
+                // Convert size display names to size codes for matching
+                let size;
+                if (sizeText.includes('Extra Small')) size = 'XS';
+                else if (sizeText.includes('Small')) size = 'S';
+                else if (sizeText.includes('Medium')) size = 'M';
+                else if (sizeText.includes('Large') && sizeText.includes('Triple')) size = 'XXXL';
+                else if (sizeText.includes('Large') && sizeText.includes('Double')) size = 'XXL';
+                else if (sizeText.includes('Large') && sizeText.includes('Extra')) size = 'XL';
+                else if (sizeText.includes('Large')) size = 'L';
+                else if (sizeText.includes('One Size')) size = 'OS';
+                else size = sizeText; // Fallback to the text if no match
+                
+                // Check if item matches type filter
+                const matchesType = selectedTypes.length === 0 || selectedTypes.includes('items');
+                
+                // Check if item matches category filter (if any categories are selected)
+                // const matchesCategory = selectedCategories.length === 0 || selectedCategories.some(c => category.includes(c));
+                const matchesCategory = selectedCategories.length === 0 || selectedCategories.some(selected =>
+                    categories.includes(selected)
+                );
+
+                // Check if item matches size filter (if any sizes are selected)
+                const matchesSize = selectedSizes.length === 0 || selectedSizes.includes(size);
+
+                const matchesSearch = searchQuery === '' || name.includes(searchQuery) || categories.some(c => c.includes(searchQuery));
+                
+                // Show item if it matches all active filters
+                if (matchesType && matchesCategory && matchesSize && matchesSearch) {
+                    card.style.display = 'block';
+                    hasVisibleItems = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            // Filter collections
+            collectionCards.forEach(card => {
+                // Check if collection matches type filter
+                const name = card.querySelector('.collection-title')?.textContent.toLowerCase() || '';
+                const description = card.querySelector('.card-text')?.textContent.toLowerCase() || '';
+                const matchesType = selectedTypes.length === 0 || selectedTypes.includes('collections');
+                const matchesSearch = searchQuery === '' || name.includes(searchQuery) || description.includes(searchQuery);
+                
+                // Show collection if it matches the type filter
+                if (matchesType && matchesSearch) {
+                    card.style.display = 'block';
+                    hasVisibleItems = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            
+            const noItemsMessage = document.querySelector('.no-items') || createNoItemsMessage();
+            
+            if (!hasVisibleItems && (itemCards.length > 0 || collectionCards.length > 0)) {
+                noItemsMessage.style.display = 'block';
+            } else {
+                noItemsMessage.style.display = 'none';
+            }
+        }
+        
+        // Create "no items" message if it doesn't exist
+        function createNoItemsMessage() {
+            const noItems = document.createElement('div');
+            noItems.className = 'no-items';
+            noItems.innerHTML = '<p>No items match the selected filters.</p>';
+            
+            const itemsGrid = document.querySelector('.items-grid');
+            itemsGrid.appendChild(noItems);
+            return noItems;
+        }
+        
+        // Clear filters function
+        function clearFilters() {
+            document.querySelectorAll('.filter-chip.active').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            const itemsChip = document.querySelector('.filter-chip[data-type="items"]');
+            if (itemsChip) {
+                itemsChip.classList.add('active');
+            }
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            document.querySelector('.filter-chip[data-type="items"]').classList.add('active');
+            applyFilters();
+        }
+
+        // Event listener for Clear Filters button
+        document.getElementById('clear-filters').addEventListener('click', clearFilters);
+
+        // Apply initial filters
+        applyFilters();
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+
+            if (searchInput) {
+                // As you type, immediately filter
+                searchInput.addEventListener('input', () => {
+                    applyFilters();
+                });
+            }
+
+            if (searchButton) {
+                // If user clicks the search button manually
+                searchButton.addEventListener('click', () => {
+                    applyFilters();
+                });
+            }
+
+
+            // Get all items with s3_image_key
+            const itemImages = document.querySelectorAll('.item-img[data-item-id]');
+            
+            // For each item, fetch a fresh presigned URL
+            itemImages.forEach(img => {
+                const itemId = img.getAttribute('data-item-id');
+                const loadingElement = img.parentElement.querySelector('.image-loading');
+                
+                fetch(`/lending/items/${itemId}/presigned-url/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Set the image source to the fresh presigned URL
+                            img.src = data.url;
+                            img.onload = function() {
+                                // Hide loading indicator when image loads
+                                if (loadingElement) {
+                                    loadingElement.style.display = 'none';
+                                }
+                                img.style.display = 'block';
+                            };
+                        } else {
+                            console.error('Failed to get presigned URL:', data.error);
+                            if (loadingElement) {
+                                loadingElement.textContent = 'Failed to load image';
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching presigned URL:', error);
+                        if (loadingElement) {
+                            loadingElement.textContent = 'Failed to load image';
+                        }
+                    });
+            });
+        });
+    </script>
+
+    <footer>
+        <div class="footer-content">
+            <h5>Class project for UVA CS 3240 | This system is not monitored, and no real information should be submitted</h5>
+        </div>
+        <style>
+            footer {
+                /*margin-top: auto;*/
+                /*background: #111;*/
+                /*padding: 0.75rem 0;*/
+                /*left: 0;*/
+                /*bottom: 0;*/
+                /*width: 100%;*/
+                /*text-align: center;*/
+                background: #111;
+                color: darkgrey;
+                text-align: center;
+                padding: 0.75rem 0;
+                margin-top: auto;
+            }
+            .footer-content {
+                max-width: 100%;
+                padding: 0 2rem;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .footer-content h5 {
+                font-family: 'Space Grotesk', sans-serif;
+                color: darkgrey;
+                margin: 0;
+                font-size: 0.75rem;
+                line-height: 0.5;
+                font-weight: 300;
+                text-align: center;
+                letter-spacing: 0.02em;
+            }
+        </style>
+    </footer>
+
+</body>
+
+
+</html>

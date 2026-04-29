@@ -17,7 +17,7 @@ Airdrobe is a modern, scalable web application built with **Django** that revolu
   - **Patrons (Users)**: Browse collections, request to borrow items, and manage their custom profiles.
 - **Collection Management**: Group items into public or private collections. Private collections support an invite-only system where patrons can request access.
 - **Lending & Borrowing Workflow**: Fully functional lending system with statuses (`PENDING`, `APPROVED`, `REJECTED`, `RETURNED`) allowing tracking of requested and borrowed items.
-- **☁️ Cloud Storage Integration**: Direct integration with **AWS S3** using `boto3` for high-performance storage and serving of user profile pictures and clothing item images.
+- **Cloud Storage Integration**: Direct integration with **AWS S3** using `boto3` for high-performance storage and serving of user profile pictures and clothing item images.
 - **Rating & Review System**: Users can leave ratings and text reviews for items they've borrowed, providing community feedback.
 
 ## Technology Stack

@@ -4,7 +4,7 @@ Airdrobe is a modern, scalable web application built with **Django** that revolu
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.1.6-092E20.svg)](https://www.djangoproject.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-🐘-336791.svg)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791.svg)](https://www.postgresql.org/)
 [![AWS S3](https://img.shields.io/badge/AWS_S3-Storage-FF9900.svg)](https://aws.amazon.com/s3/)
 
 ---

@@ -20,7 +20,7 @@ Airdrobe is a modern, scalable web application built with **Django** that revolu
 - **☁️ Cloud Storage Integration**: Direct integration with **AWS S3** using `boto3` for high-performance storage and serving of user profile pictures and clothing item images.
 - **Rating & Review System**: Users can leave ratings and text reviews for items they've borrowed, providing community feedback.
 
-##Technology Stack
+## Technology Stack
 
 - **Backend**: Python, Django 5.1
 - **Database**: PostgreSQL (via `psycopg3` & `psycopg2-binary`)
@@ -29,7 +29,7 @@ Airdrobe is a modern, scalable web application built with **Django** that revolu
 - **Deployment & Hosting**: Heroku ready (`django-heroku`, `gunicorn`, `whitenoise`)
 - **Frontend**: HTML5, CSS3, JavaScript (Django Templates)
 
-## 🗄️ Core Data Models
+## Core Data Models
 
 - **Users**: Custom User model extended into `Librarian` and `Patron` profiles.
 - **Items & Categories**: Clothing items with details like size, condition, category, and S3 image links.
@@ -39,7 +39,7 @@ Airdrobe is a modern, scalable web application built with **Django** that revolu
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 To run this project locally, follow these steps:
 
@@ -101,11 +101,10 @@ Visit `http://localhost:8000` in your browser.
 
 ---
 
-## 📈 Future Enhancements
+## Future Enhancements
 
 - **Real-time Notifications**: Notify users when their borrow requests are approved or when items are due.
 - **Advanced Search & Filtering**: Allow users to filter items by size, condition, and availability.
 - **Payment Integration**: Add payment processing for late fees or premium collections.
 
 ---
-*Developed with ❤️ as a modern approach to sustainable clothing sharing.*
